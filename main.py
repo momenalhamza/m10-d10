@@ -28,47 +28,41 @@ class RetrieveRequest(BaseModel):
         query — non-empty search string (1..500 chars).
         k — number of chunks to return (1..10, default 3).
     """
-    # TODO: declare `query: str` with a Field(..., min_length=..., max_length=...)
-    #       constraint and `k: int` with ge=... and le=... and a default.
-    pass
+    query: str = Field(..., min_length=1, max_length=500)
+    k: int = Field(3, ge=1, le=10)
 
 
 class Chunk(BaseModel):
     """One retrieved chunk."""
-    # TODO: declare chunk_id (int), text (str), score (float).
-    pass
+    chunk_id: int
+    text: str
+    score: float
 
 
 class RetrieveResponse(BaseModel):
     """Response body for POST /retrieve."""
-    # TODO: declare `retrieved: List[Chunk]`.
-    pass
+    retrieved: List[Chunk]
 
 
 class HealthResponse(BaseModel):
     """Response body for GET /healthz."""
-    # TODO: declare `status: str`.
-    pass
+    status: str
 
 
 # --- Path operations -------------------------------------------------
 
-@app.post("/retrieve")
-def retrieve(req: RetrieveRequest):
+@app.post("/retrieve", response_model=RetrieveResponse)
+def retrieve(req: RetrieveRequest) -> RetrieveResponse:
     """Retrieve top-k chunks for a query.
 
     Returns RetrieveResponse with the top-k token-overlap matches. If no
     chunk overlaps, returns 200 with `retrieved=[]` (not an error).
     """
-    # TODO: set response_model=RetrieveResponse on the decorator above,
-    #       call retrieve_top_k(req.query, req.k) (imported above from
-    #       retrieval.py), and wrap the returned list in a RetrieveResponse.
-    raise NotImplementedError
+    raw = retrieve_top_k(req.query, req.k)
+    return RetrieveResponse(retrieved=[Chunk(**r) for r in raw])
 
 
-@app.get("/healthz")
-def healthz():
+@app.get("/healthz", response_model=HealthResponse)
+def healthz() -> HealthResponse:
     """Liveness probe. Returns 200 with {"status": "ok"}."""
-    # TODO: annotate response_model=HealthResponse on the decorator above
-    #       and return a HealthResponse.
-    raise NotImplementedError
+    return HealthResponse(status="ok")
